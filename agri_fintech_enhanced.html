@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agri-Fintech — Enhanced Prototype</title>
+  <!-- External libs (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{ --bg:#f5f7fb; --card:#ffffff; --accent:#1f8f87; --muted:#6b7280; --danger:#e11d48; }
+    [data-theme="dark"]{ --bg:#0b1220; --card:#071021; --accent:#2dd4bf; --muted:#9aa4b2; --text:#e6eef6; }
+    *{box-sizing:border-box}
+    body{ font-family:Inter, system-ui, Arial; margin:0; background:var(--bg); color:var(--text,#0f172a);}
+    header{ background:linear-gradient(90deg,#115e59,#2b7a78); color:white; padding:14px 20px; display:flex; align-items:center; justify-content:space-between;}
+    header h1{ font-size:18px; margin:0;}
+    #app{ display:flex; gap:18px; padding:18px; align-items:flex-start; }
+    nav{ width:260px; }
+    .card{ background:var(--card); padding:14px; border-radius:10px; box-shadow:0 6px 18px rgba(16,24,40,0.06); color:var(--text,#0f172a);}    
+    .menu{ display:flex; flex-direction:column; gap:8px; }
+    .menu button{ text-align:left; padding:10px 12px; border-radius:8px; border:none; background:transparent; cursor:pointer; color:var(--text,#0f172a); font-weight:600;}
+    .menu button.active{ background:rgba(45,212,191,0.08); color:var(--accent); box-shadow: inset 0 0 0 1px rgba(43,122,120,0.06);}    
+    main{ flex:1; display:grid; grid-template-columns: 1fr 360px; gap:18px;}
+    .section{ padding:12px; border-radius:8px; background:linear-gradient(180deg,#fff,#fbffff); }
+    [data-theme="dark"] .section{ background:linear-gradient(180deg,#07121a,#08151f); }
+    label{ display:block; font-size:13px; color:var(--muted); margin-top:10px;}
+    input[type="text"], input[type="number"], select, textarea{ width:100%; padding:8px 10px; margin-top:6px; border-radius:6px; border:1px solid #e6eef0; box-sizing:border-box; background:transparent; color:inherit}
+    button.primary{ background:var(--accent); color:white; padding:10px 12px; border:none; border-radius:8px; margin-top:12px; cursor:pointer;}
+    .small{ font-size:13px; color:var(--muted); }
+    .row{ display:flex; gap:12px; }
+    .kpi{ display:flex; gap:12px; margin-top:10px; }
+    .kpi .item{ flex:1; padding:10px; background:#f8fffd; border-radius:8px; text-align:center;}
+    [data-theme="dark"] .kpi .item{ background:rgba(255,255,255,0.03); }
+    table{ width:100%; border-collapse:collapse; margin-top:8px; font-size:13px;}
+    table th, table td{ text-align:left; padding:8px; border-bottom:1px solid #eef3f6;}
+    .chip{ display:inline-block; padding:6px 8px; border-radius:999px; background:#eaf7f6; color:var(--accent); font-weight:600; font-size:12px;}
+    footer{ padding:12px 18px; text-align:center; color:var(--muted); font-size:13px;}
+    .hidden{ display:none; }
+    .flex{ display:flex; align-items:center; gap:8px; }
+    .list{ max-height:220px; overflow:auto; }
+    .notif{ padding:8px;border-radius:8px;margin-bottom:8px;border-left:4px solid rgba(31,143,135,0.12); }
+    .badge{ background:rgba(31,143,135,0.12); padding:4px 8px;border-radius:6px; font-size:12px }
+    .chatbox{ border:1px solid #e6eef0; border-radius:8px; padding:8px; max-height:260px; overflow:auto; background:transparent }
+    .msg.user{ text-align:right } .msg.bot{ text-align:left }
+    @media(max-width:900px){ main{ grid-template-columns: 1fr; } nav{ display:none; } }
+  </style>
+</head>
+<body data-theme="light">
+  <header>
+    <h1>Agri-Fintech — Enhanced Prototype</h1>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="small" id="status">Local demo • No backend • Data in browser</div>
+      <select id="lang" aria-label="language" title="Language">
+        <option value="en">EN</option>
+        <option value="hi">हिंदी</option>
+      </select>
+      <button id="dark-toggle" class="primary">Dark</button>
+    </div>
+  </header>
+
+  <div id="app">
+    <nav class="card">
+      <div style="font-weight:700;margin-bottom:10px;">Menu</div>
+      <div class="menu" id="menu">
+        <button class="active" data-view="dashboard">Dashboard</button>
+        <button data-view="farmers">Farmers</button>
+        <button data-view="credit">Credit Score</button>
+        <button data-view="loan">Loans</button>
+        <button data-view="insurance">Insurance</button>
+        <button data-view="market">Market</button>
+        <button data-view="analytics">Analytics</button>
+        <button data-view="chat">Assistant</button>
+      </div>
+    </nav>
+
+    <main>
+      <div id="views">
+        <!-- Dashboard -->
+        <div class="card section" id="view-dashboard">
+          <h2 id="welcome">Welcome</h2>
+          <p class="small" id="dashboard-desc">An enhanced prototype with analytics, loans, insurance and a helper assistant.</p>
+
+          <div style="display:flex;gap:12px;margin-top:12px;">
+            <div style="flex:1;">
+              <div class="card" style="padding:10px;background:transparent;box-shadow:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div><strong id="label-active">Active Farmers</strong><div class="small" id="count-farmers">0</div></div>
+                  <div class="chip" id="avg-score">Score: --</div>
+                </div>
+              </div>
+            </div>
+            <div style="width:260px;">
+              <div class="card" style="padding:10px;">
+                <strong id="latest-market-label">Latest Market</strong>
+                <div class="small" id="latest-market">--</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <h3>Quick actions</h3>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button class="primary" onclick="showView('farmers')">Register / Edit Farmer</button>
+              <button onclick="showView('market')">Check Market</button>
+              <button onclick="showView('credit')">Compute Score</button>
+              <button onclick="showView('loan')">Apply Loan</button>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="card section" style="padding:10px;">
+              <h4>Notifications</h4>
+              <div id="notif-list" class="list small"></div>
+            </div>
+            <div class="card section" style="padding:10px;">
+              <h4>Mini Market Sparkline</h4>
+              <canvas id="miniMarket" height="80"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Farmers -->
+        <div class="card section hidden" id="view-farmers">
+          <h2>Farmer Profiles</h2>
+          <div style="display:flex;gap:12px;margin-top:12px;">
+            <div style="flex:1;">
+              <form id="frm-farmer">
+                <label>Full name<input type="text" id="f-name" placeholder="Ex: Ramesh Kumar" required></label>
+                <label>Mobile number<input type="text" id="f-mobile" placeholder="10-digit mobile"></label>
+                <label>Village / Location<input type="text" id="f-village" placeholder="Village or town"></label>
+                <label>Land size (acres)<input type="number" id="f-land" placeholder="e.g., 1.5"></label>
+                <label>Primary crop
+                  <select id="f-crop"><option>Rice</option><option>Wheat</option><option>Maize</option><option>Cotton</option><option>Vegetables</option></select>
+                </label>
+                <label>Has formal credit history?
+                  <select id="f-credit-history"><option value="yes">Yes</option><option value="no" selected>No</option></select>
+                </label>
+                <label>Monthly digital transaction count<input type="number" id="f-digital-trans" placeholder="e.g., 8"></label>
+                <input type="hidden" id="f-id">
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                  <button class="primary" type="submit">Save Farmer</button>
+                  <button type="button" id="btn-new">New</button>
+                </div>
+              </form>
+            </div>
+            <div style="width:320px;">
+              <div style="margin-bottom:8px;">
+                <input type="text" id="search-farmers" placeholder="Search name/village/crop" style="width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef0;">
+              </div>
+              <div class="card" style="padding:8px;max-height:420px;overflow:auto;">
+                <div id="farmer-list" class="small"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Credit Score -->
+        <div class="card section hidden" id="view-credit">
+          <h2>Credit Scoring (Enhanced)</h2>
+          <div class="small">Heuristic + activity-based adjustments. This demo shows components and a confidence band.</div>
+
+          <label>Select farmer
+            <select id="select-farmer"></select>
+          </label>
+
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+            <button class="primary" id="btn-calc-score">Calculate Score</button>
+            <button id="btn-simulate-ml">Simulate ML Predict</button>
+          </div>
+
+          <div id="score-result" style="margin-top:12px;display:none;">
+            <h3>Score: <span id="score-val"></span> <span id="score-badge" class="chip"></span></h3>
+            <p class="small" id="score-explain"></p>
+            <canvas id="scoreChart" height="140"></canvas>
+          </div>
+        </div>
+
+        <!-- Loans -->
+        <div class="card section hidden" id="view-loan">
+          <h2>Loans</h2>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label>Choose farmer<select id="loan-farmer"></select></label>
+              <label>Loan amount (₹)<input type="number" id="loan-amount" placeholder="e.g., 20000"></label>
+              <label>Interest rate (%)<input type="number" id="loan-interest" value="8"></label>
+              <label>Tenure (months)<input type="number" id="loan-tenure" value="12"></label>
+              <label>Purpose<select id="loan-purpose"><option>Crop inputs</option><option>Equipment</option><option>Working capital</option></select></label>
+              <div style="display:flex;gap:8px;"><button class="primary" id="btn-apply-loan">Apply</button><button id="btn-calc-loan">Calc EMI</button></div>
+              <div id="loan-result" style="margin-top:12px;display:none;"></div>
+            </div>
+            <div style="width:320px;">
+              <h4>Loan History</h4>
+              <div id="loan-list" class="small" style="max-height:360px;overflow:auto;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insurance -->
+        <div class="card section hidden" id="view-insurance">
+          <h2>Insurance & Claims</h2>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <label>Choose farmer<select id="ins-farmer"></select></label>
+              <label>Crop type<select id="ins-crop"><option>Rice</option><option>Wheat</option><option>Maize</option><option>Vegetables</option></select></label>
+              <label>Sum insured (₹)<input type="number" id="ins-sum" value="50000"></label>
+              <label>Choose trigger<select id="ins-trigger"><option value="none">None (manual)</option><option value="drought">Drought</option><option value="flood">Flood</option><option value="price_drop">Price drop</option></select></label>
+              <div style="margin-top:8px;"><button class="primary" id="btn-buy-ins">Buy Policy</button>
+              <button id="btn-file-claim">File Claim</button></div>
+              <div id="ins-result" style="margin-top:10px;display:none;"></div>
+            </div>
+            <div style="width:320px;">
+              <h4>Policies & Claims</h4>
+              <div id="policy-list" class="small" style="max-height:360px;overflow:auto;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Market -->
+        <div class="card section hidden" id="view-market">
+          <h2>Market Prices (Simulated)</h2>
+          <div class="small">Simulated mandi prices with history and trends.</div>
+          <canvas id="marketChart" height="160"></canvas>
+          <table id="market-table">
+            <thead><tr><th>Commodity</th><th>Mandi Price ₹/kg</th><th>Trend</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div style="margin-top:8px;display:flex;gap:8px;"><button onclick="simulateMarketTick()">Tick</button><button onclick="seedMarket()">Seed sample</button><button onclick="exportMarket()">Export CSV</button></div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="card section hidden" id="view-analytics">
+          <h2>Analytics & KPIs</h2>
+          <div class="small">Computed from local data (demo)</div>
+          <div class="kpi" id="kpi-row">
+            <div class="item">
+              <div class="small">Avg Credit Score</div><div id="kpi-score">--</div>
+            </div>
+            <div class="item">
+              <div class="small">Loan Approvals</div><div id="kpi-loans">--</div>
+            </div>
+            <div class="item">
+              <div class="small">Insured Farmers</div><div id="kpi-insured">--</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <h3>Recent Activity</h3>
+            <div id="activity-log" class="small"></div>
+          </div>
+        </div>
+
+        <!-- Chat Assistant -->
+        <div class="card section hidden" id="view-chat">
+          <h2>Assistant</h2>
+          <div class="small">Ask about loans, insurance, or market tips.</div>
+          <div class="chatbox" id="chatbox"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;"><input id="chat-input" placeholder="Ask something..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #e6eef0;"><button id="chat-send">Send</button></div>
+        </div>
+
+      </div>
+
+      <aside>
+        <div class="card section" id="panel-profile">
+          <h3>Selected Farmer</h3>
+          <div id="selected-info" class="small">None</div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button onclick="showView('farmers')">Add / Edit Farmer</button>
+            <button id="btn-export">Export Data</button>
+          </div>
+        </div>
+
+        <div class="card section" style="margin-top:12px;">
+          <h3>Tips</h3>
+          <ul style="padding-left:18px" class="small">
+            <li>Collect digital payments to build credit profile</li>
+            <li>Compare mandi prices before selling</li>
+            <li>Insurance reduces risk from weather shocks</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <footer>Enhanced Prototype • Data stored in browser only • Expandable to real APIs</footer>
+
+<script>
+/* ===== State & storage ===== */
+const state = { farmers: [], market: [], loans: [], policies: [], activity: [], notifs: [] };
+function saveState(){ localStorage.setItem('agri_proto_enh', JSON.stringify(state)); }
+function loadState(){ const raw = localStorage.getItem('agri_proto_enh'); if(raw){ Object.assign(state, JSON.parse(raw)); } else seedDemo(); }
+
+/* ===== Utilities ===== */
+const $ = id=>document.getElementById(id);
+function uid(prefix='id'){ return prefix + Math.random().toString(36).slice(2,9); }
+function pushActivity(msg){ state.activity.unshift(${new Date().toLocaleString()}: ${msg}); if(state.activity.length>200) state.activity.pop(); saveState(); renderAnalytics(); }
+function notify(msg){ state.notifs.unshift({id:uid('n'),msg,time:Date.now()}); if(state.notifs.length>50) state.notifs.pop(); saveState(); renderNotifs(); }
+
+/* ===== Demo seed ===== */
+function seedDemo(){
+  state.farmers = [
+    { id:'f1', name:'Ramesh', mobile:'9000000001', village:'Anantapur', land:2.0, crop:'Rice', creditHistory:false, digitalTrans:5, created:Date.now() },
+    { id:'f2', name:'Sita', mobile:'9000000002', village:'Nalgonda', land:1.0, crop:'Vegetables', creditHistory:true, digitalTrans:18, created:Date.now() }
+  ];
+  seedMarket();
+  state.loans = [];
+  state.policies = [];
+  state.activity = ['Seeded demo'];
+  state.notifs = [{id:uid('n'),msg:'Demo seeded',time:Date.now()}];
+  saveState();
+}
+
+/* ===== UI: navigation ===== */
+function showView(view){ document.querySelectorAll('#views > div').forEach(d=>d.classList.add('hidden'));
+  const map = {
+    dashboard: 'view-dashboard', farmers:'view-farmers', credit:'view-credit', loan:'view-loan', insurance:'view-insurance', market:'view-market', analytics:'view-analytics', chat:'view-chat'
+  };
+  const id = map[view] || 'view-dashboard';
+  $(id).classList.remove('hidden');
+  document.querySelectorAll('#menu button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  refreshFarmerSelects(); updateCounts(); renderAnalytics(); renderMarket(); renderNotifs();
+}
+
+/* ===== Farmer management ===== */
+function refreshFarmerList(){
+  const wrap = $('farmer-list'); wrap.innerHTML = '';
+  state.farmers.forEach(f=>{
+    const el = document.createElement('div'); el.style.padding='8px'; el.style.borderBottom='1px solid rgba(0,0,0,0.04)';
+    el.innerHTML = <strong>${f.name}</strong><div class='small'>${f.village} • ${f.crop} • ${f.land} ac</div><div style='margin-top:6px'><button data-id='${f.id}' class='btn-edit'>Edit</button> <button data-id='${f.id}' class='btn-del'>Delete</button></div>;
+    wrap.appendChild(el);
+  });
+  wrap.querySelectorAll('.btn-edit').forEach(b=>b.addEventListener('click', e=>{ const f = state.farmers.find(x=>x.id===b.dataset.id); if(f) loadFarmerToForm(f); }));
+  wrap.querySelectorAll('.btn-del').forEach(b=>b.addEventListener('click', e=>{ if(confirm('Delete farmer?')){ state.farmers = state.farmers.filter(x=>x.id!==b.dataset.id); saveState(); refreshFarmerList(); updateCounts(); pushActivity(Deleted farmer ${b.dataset.id}); } }));
+}
+function loadFarmerToForm(f){ $('f-id').value = f.id; $('f-name').value=f.name; $('f-mobile').value=f.mobile; $('f-village').value=f.village; $('f-land').value=f.land; $('f-crop').value=f.crop; $('f-credit-history').value = f.creditHistory? 'yes':'no'; $('f-digital-trans').value=f.digitalTrans; showView('farmers'); }
+
+$('frm-farmer').addEventListener('submit', e=>{ e.preventDefault(); const id = $('f-id').value || uid('f'); const f = { id, name:$('f-name').value||'Unknown', mobile:$('f-mobile').value||'', village:$('f-village').value||'', land:parseFloat($('f-land').value)||0, crop:$('f-crop').value, creditHistory:$('f-credit-history').value==='yes', digitalTrans:parseInt($('f-digital-trans').value)||0, created:Date.now() };
+  const idx = state.farmers.findIndex(x=>x.id===id);
+  if(idx>=0) state.farmers[idx]=f; else state.farmers.unshift(f);
+  saveState(); refreshFarmerList(); refreshFarmerSelects(); updateCounts(); pushActivity(Saved farmer ${f.name}); alert('Saved'); showView('dashboard');
+});
+$('btn-new').addEventListener('click', ()=>{ document.querySelectorAll('#frm-farmer input, #frm-farmer select').forEach(i=>i.value=''); $('f-id').value=''; });
+$('search-farmers').addEventListener('input', ()=>{ const q = $('search-farmers').value.toLowerCase(); document.querySelectorAll('#farmer-list > div').forEach(div=>{ const txt = div.textContent.toLowerCase(); div.style.display = txt.includes(q)?'block':'none'; }); });
+
+/* ===== Selects for flows ===== */
+function refreshFarmerSelects(){ ['select-farmer','loan-farmer','ins-farmer'].forEach(id=>{ const sel = $(id); if(!sel) return; sel.innerHTML=''; state.farmers.forEach(f=>{ const opt = document.createElement('option'); opt.value=f.id; opt.textContent = ${f.name} — ${f.village} (${f.crop}); sel.appendChild(opt); }); }); updateSelectedInfo(); }
+function updateSelectedInfo(){ const sel = document.querySelector('#select-farmer, #loan-farmer, #ins-farmer'); const id = sel ? sel.value : null; const f = state.farmers.find(x=>x.id===id); if(f) $('selected-info').innerHTML = <strong>${f.name}</strong><div class="small">${f.mobile} • ${f.village} • ${f.land} ac • ${f.crop}</div>; else $('selected-info').innerHTML = 'None'; }
+
+/* ===== Scoring (heuristic + activity) ===== */
+function heuristicScore(f){ if(!f) return 0; let score = 40; score += Math.min(30, Math.round(f.land * 10)); score += Math.min(20, f.digitalTrans * 2); if(f.creditHistory) score += 10; // activity boost
+  const recentActivity = state.activity.slice(0,30).filter(a=>a.includes(f.name)).length; score += Math.min(10, recentActivity);
+  return Math.min(100, score);
+}
+
+$('btn-calc-score').addEventListener('click', ()=>{
+  const sel = $('select-farmer'); if(!sel || !sel.value){ alert('Select a farmer'); return; }
+  const f = state.farmers.find(x=>x.id===sel.value); const score = heuristicScore(f);
+  $('score-val').textContent = score; const badge = score >= 70 ? 'Good' : score >= 50 ? 'Fair' : 'Low'; $('score-badge').textContent = badge;
+  $('score-explain').textContent = Components: base40 + land ${Math.min(30, Math.round(f.land*10))} + digital ${Math.min(20,f.digitalTrans*2)} + credit ${f.creditHistory?10:0} + activity boost;
+  $('score-result').style.display='block'; renderScoreChart(f, score);
+  pushActivity(Calculated score ${score} for ${f.name});
+});
+
+$('btn-simulate-ml').addEventListener('click', ()=>{
+  const sel = $('select-farmer'); if(!sel || !sel.value){ alert('Select a farmer'); return; }
+  const f = state.farmers.find(x=>x.id===sel.value);
+  // fake ML: base + small random factor
+  const predicted = Math.min(100, Math.round(heuristicScore(f) * (0.9 + Math.random()*0.2)));
+  notify(ML-predicted score ${predicted} for ${f.name});
+  pushActivity(Simulated ML prediction ${predicted} for ${f.name});
+});
+
+/* Chart: score components */
+let scoreChart=null;
+function renderScoreChart(f, score){ const ctx = $('scoreChart').getContext('2d'); const data = { labels:['Base','Land','Digital','Credit','Activity'], datasets:[{ label:'Points', data:[40, Math.min(30,Math.round(f.land*10)), Math.min(20,f.digitalTrans*2), f.creditHistory?10:0, Math.min(10,state.activity.filter(a=>a.includes(f.name)).length)], tension:0.3 }] };
+  if(scoreChart) scoreChart.destroy(); scoreChart = new Chart(ctx, { type:'bar', data, options:{ responsive:true, plugins:{ legend:{ display:false } } } }); }
+
+/* ===== Loans ===== */
+$('btn-calc-loan').addEventListener('click', ()=>{ const P = parseFloat($('loan-amount').value)||0; const r = parseFloat($('loan-interest').value)/100/12; const n = parseInt($('loan-tenure').value)||12; if(P<=0){ alert('Enter amount'); return; } const emi = r===0? P/n : P * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1); alert(Estimated EMI: ₹${Math.round(emi)}); });
+$('btn-apply-loan').addEventListener('click', ()=>{ const fid = $('loan-farmer').value; if(!fid){ alert('Select farmer'); return; } const f = state.farmers.find(x=>x.id===fid); const amount = parseInt($('loan-amount').value)||0; if(amount<=0){ alert('Enter loan amount'); return; } const score = heuristicScore(f); let approved=false; let reason=''; if(score >= 70 && amount <= (f.land * 40000 + 30000)) { approved=true; reason='Auto-approved by score & land collateral estimate'; } else if(score >= 50 && amount <= 30000){ approved=true; reason='Conditional approval (small loan)'; } else { approved=false; reason='Score too low or amount too large'; }
+  const loan = { id:uid('l'), farmerId:fid, amount, approved, reason, date:new Date().toISOString(), interest:parseFloat($('loan-interest').value)||8, tenure: parseInt($('loan-tenure').value)||12 };
+  state.loans.unshift(loan); saveState(); renderLoans(); updateCounts(); pushActivity(${approved? 'Loan approved' : 'Loan rejected'} for ${f.name} ₹${amount}); notify(${approved? 'Loan approved' : 'Loan rejected'} for ${f.name}); $('loan-result').style.display='block'; $('loan-result').innerHTML = <div><strong>${approved? 'Approved ✅' : 'Rejected ❌'}</strong></div><div class="small">${reason}</div>; });
+function renderLoans(){ const wrap = $('loan-list'); wrap.innerHTML=''; state.loans.forEach(l=>{ const f = state.farmers.find(x=>x.id===l.farmerId) || {name:'Unknown'}; const el = document.createElement('div'); el.style.padding='8px'; el.style.borderBottom='1px solid rgba(0,0,0,0.04)'; el.innerHTML = <strong>${f.name}</strong> • ₹${l.amount} • ${l.approved? '<span style="color:green">Approved</span>':'<span style="color:red">Rejected</span>'}<div class='small'>${l.reason} • ${new Date(l.date).toLocaleString()}</div>; wrap.appendChild(el); }); }
+
+/* ===== Insurance ===== */
+$('btn-buy-ins').addEventListener('click', ()=>{ const fid = $('ins-farmer').value; if(!fid){ alert('Select farmer'); return; } const sum = parseInt($('ins-sum').value)||0; const crop = $('ins-crop').value; if(sum<=0){ alert('Enter sum'); return; } const premium = Math.round(sum * 0.03); const policy = { id:uid('p'), farmerId:fid, crop, sum, premium, trigger:$('ins-trigger').value, date:new Date().toISOString(), status:'active' };
+  state.policies.unshift(policy); saveState(); renderPolicies(); pushActivity(Bought policy for ${fid} ${crop} ₹${sum}); notify(Policy purchased for ${fid} premium ₹${premium}); $('ins-result').style.display='block'; $('ins-result').innerHTML = <div><strong>Policy purchased ✅</strong></div><div class="small">Sum ₹${sum} • Premium ₹${premium}</div>; });
+
+$('btn-file-claim').addEventListener('click', ()=>{ const fid = $('ins-farmer').value; if(!fid){ alert('Select farmer'); return; } const policies = state.policies.filter(p=>p.farmerId===fid && p.status==='active'); if(policies.length===0){ alert('No active policy'); return; } const claim = { id:uid('c'), policyId:policies[0].id, farmerId:fid, status:'submitted', date:new Date().toISOString() }; state.policies[0].claims = state.policies[0].claims || []; state.policies[0].claims.push(claim); saveState(); pushActivity(Claim filed by ${fid}); notify(Claim filed by ${fid}); renderPolicies(); $('ins-result').style.display='block'; $('ins-result').innerHTML=<div><strong>Claim submitted ✅</strong></div><div class='small'>We simulated claim processing.</div>; });
+
+function renderPolicies(){ const wrap = $('policy-list'); wrap.innerHTML=''; state.policies.forEach(p=>{ const f = state.farmers.find(x=>x.id===p.farmerId) || {name:'Unknown'}; const el = document.createElement('div'); el.style.padding='8px'; el.style.borderBottom='1px solid rgba(0,0,0,0.04)'; const claims = (p.claims||[]).map(c=><div class='small'>Claim ${c.id} • ${c.status}</div>).join(''); el.innerHTML = <strong>${f.name}</strong> • ${p.crop} • Sum ₹${p.sum} • Premium ₹${p.premium} <div class='small'>${p.status} • ${new Date(p.date).toLocaleString()}</div>${claims}; wrap.appendChild(el); }); }
+
+/* ===== Market simulation & charts ===== */
+function seedMarket(){ state.market = [
+  { name:'Rice', history:[28,29,27,28,29], price:29 },
+  { name:'Wheat', history:[22,21,23,22,22], price:22 },
+  { name:'Maize', history:[18,17,19,18,18], price:18 },
+  { name:'Tomato', history:[16,18,14,16,17], price:17 },
+  { name:'Cotton', history:[140,138,142,141,140], price:140 }
+]; state.activity.unshift('Seeded market data'); saveState(); renderMarket(); updateCounts(); }
+
+function simulateMarketTick(){ state.market.forEach(m=>{ const delta = Math.round((Math.random()-0.5) * 6); m.price = Math.max(5, m.price + delta); m.history = (m.history||[]).slice(-50); m.history.push(m.price); m.trend = delta>0? 'up' : delta<0? 'down':'stable'; }); state.activity.unshift('Market prices updated'); saveState(); renderMarket(); updateCounts(); }
+
+function renderMarket(){ const tbody = document.querySelector('#market-table tbody'); tbody.innerHTML=''; state.market.forEach(m=>{ const tr = document.createElement('tr'); tr.innerHTML = <td>${m.name}</td><td>₹${m.price}</td><td class="small">${m.trend||'stable'}</td>; tbody.appendChild(tr); }); renderMarketChart(); renderMiniSparkline(); }
+
+let marketChart=null;
+function renderMarketChart(){ const ctx = $('marketChart').getContext('2d'); const labels = state.market[0] ? (state.market[0].history||[]).map((v,i)=>i+1) : [];
+  const datasets = state.market.map(m=>({ label:m.name, data:(m.history||[]).slice(-20), tension:0.3 }));
+  if(marketChart) marketChart.destroy(); marketChart = new Chart(ctx, { type:'line', data:{ labels:labels.slice(-20), datasets}, options:{responsive:true, interaction:{mode:'index',axis:'x'}, plugins:{ legend:{ position:'bottom'} } } }); }
+
+let miniChart=null;
+function renderMiniSparkline(){ const ctx = $('miniMarket').getContext('2d'); const d = state.market[0] ? (state.market[0].history || []).slice(-10) : []; if(miniChart) miniChart.destroy(); miniChart = new Chart(ctx, { type:'line', data:{ labels:d.map((_,i)=>i+1), datasets:[{ label:'Rice', data:d, tension:0.3, pointRadius:0 }]}, options:{plugins:{ legend:{ display:false } }, elements:{ line:{ borderWidth:2 } }, responsive:true } }); }
+
+function exportMarket(){ const rows = ['Commodity,'+ (state.market[0]?.history?.map((_,i)=>T${i+1}).join(',')||'')]; state.market.forEach(m=>{ rows.push([m.name, ...(m.history||[]).join(',')].join(',')); }); const csv = rows.join('\n'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='market.csv'; a.click(); URL.revokeObjectURL(url); }
+
+/* ===== Analytics ===== */
+function renderAnalytics(){ const avgScore = state.farmers.length ? Math.round(state.farmers.reduce((s,f)=>s+heuristicScore(f),0)/state.farmers.length) : '--'; $('kpi-score').textContent=avgScore; const approvedLoans = state.loans.filter(l=>l.approved).length; $('kpi-loans').textContent=approvedLoans; $('kpi-insured').textContent = state.policies.length; $('activity-log').innerHTML = state.activity.slice(0,10).map(a=>• ${a}).join('<br>'); }
+
+/* ===== Notifications ===== */
+function renderNotifs(){ const wrap = $('notif-list'); wrap.innerHTML=''; state.notifs.slice(0,10).forEach(n=>{ const el = document.createElement('div'); el.className='notif small'; el.innerHTML = <div>${n.msg}</div><div class='small' style='opacity:0.6'>${new Date(n.time).toLocaleString()}</div>; wrap.appendChild(el); }); }
+
+/* ===== Chat Assistant (simple rules) ===== */
+function botReply(text){ const box = $('chatbox'); const el = document.createElement('div'); el.className='msg bot small'; el.style.padding='6px'; el.style.margin='6px 0'; el.innerHTML = <strong>Assistant:</strong> ${text}; box.appendChild(el); box.scrollTop = box.scrollHeight; }
+$('chat-send').addEventListener('click', ()=>{ const t = $('chat-input').value.trim(); if(!t) return; const box = $('chatbox'); const el = document.createElement('div'); el.className='msg user small'; el.style.padding='6px'; el.style.margin='6px 0'; el.innerHTML = <strong>You:</strong> ${t}; box.appendChild(el); $('chat-input').value=''; box.scrollTop = box.scrollHeight; // simple rules
+  setTimeout(()=>{
+    if(/loan|credit|emi|interest/.test(t.toLowerCase())) botReply('You can compute EMI in Loans → Calc EMI. Generally keep EMIs < 30% of expected seasonal income.');
+    else if(/insurance|claim/.test(t.toLowerCase())) botReply('Buy crop insurance sized to expected crop value. Use Claims to file a request; this demo simulates outcomes.');
+    else if(/market|price|mandi/.test(t.toLowerCase())) botReply('View Market to see price trends. Consider selling when price > moving average.');
+    else botReply('Try asking about loans, insurance, or market prices.');
+  },500);
+});
+
+/* ===== Notifs & processing simulation ===== */
+setInterval(()=>{
+  // random simulate notif: small market move triggers price_drop notif
+  if(state.market.length && Math.random() < 0.08){ const m = state.market[Math.floor(Math.random()*state.market.length)]; notify(${m.name} price moved to ₹${m.price}); }
+  // simulate claim processing
+  state.policies.forEach(p=>{ (p.claims||[]).forEach(c=>{ if(c.status==='submitted' && Math.random()<0.2){ c.status='paid'; pushActivity(Claim ${c.id} paid for policy ${p.id}); notify(Claim ${c.id} processed for ${p.farmerId}); saveState(); renderPolicies(); } }); });
+},5000);
+
+/* ===== Counts and UI updates ===== */
+function updateCounts(){ $('count-farmers').textContent = state.farmers.length; const avg = state.farmers.length? Math.round(state.farmers.reduce((s,f)=>s+heuristicScore(f),0)/state.farmers.length):'--'; $('avg-score').textContent = Score: ${avg}; const latest = state.market.map(m=>${m.name}: ₹${m.price}).slice(0,3).join(' • '); $('latest-market').textContent = latest || '--'; }
+
+/* ===== Notable helpers ===== */
+function initUI(){ document.querySelectorAll('#menu button').forEach(b=> b.addEventListener('click', ()=> showView(b.dataset.view)) ); $('lang').addEventListener('change', ()=>{ if($('lang').value==='hi'){ translateHindi(); } else translateEnglish(); }); $('dark-toggle').addEventListener('click', ()=>{ const dt = document.body.getAttribute('data-theme'); if(dt==='light'){ document.body.setAttribute('data-theme','dark'); $('dark-toggle').textContent='Light'; } else { document.body.setAttribute('data-theme','light'); $('dark-toggle').textContent='Dark'; } }); $('btn-export').addEventListener('click', ()=>{ const a = document.createElement('a'); const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); a.href=URL.createObjectURL(blob); a.download='agri_proto_data.json'; a.click(); });
+}
+
+function translateHindi(){ $('welcome').textContent='स्वागत हे'; $('dashboard-desc').textContent='कई सुविधाओं के साथ उन्नत प्रोटोटाइप।'; $('label-active').textContent='सक्रिय किसान'; $('latest-market-label').textContent='ताज़ा मंडी'; }
+function translateEnglish(){ $('welcome').textContent='Welcome'; $('dashboard-desc').textContent='An enhanced prototype with analytics, loans, insurance and a helper assistant.'; $('label-active').textContent='Active Farmers'; $('latest-market-label').textContent='Latest Market'; }
+
+/* ===== init load ===== */
+window.addEventListener('load', ()=>{ loadState(); initUI(); refreshFarmerList(); refreshFarmerSelects(); renderMarket(); renderLoans(); renderPolicies(); renderNotifs(); updateCounts(); renderAnalytics(); showView('dashboard'); // periodic analytics refresh
+  setInterval(()=>{ renderAnalytics(); },2000);
+});
+</script>
+</body>
+</html>
